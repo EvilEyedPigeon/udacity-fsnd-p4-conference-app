@@ -120,7 +120,7 @@ class SessionType(messages.Enum):
 class Session(ndb.Model):
     """Session -- Conference session object"""
     sessionName = ndb.StringProperty()
-    typeOfSession = ndb.StringProperty(default = "REGULAR_SESSION")
+    typeOfSession = ndb.StringProperty(default = "NOT_SPECIFIED")
     speaker = ndb.StringProperty()
     highlights = ndb.StringProperty(repeated = True)
     date = ndb.DateProperty()

@@ -369,6 +369,10 @@ class ConferenceApi(remote.Service):
         data["key"] = s_key
         print "s_key:", s_key
 
+        # Convert typeOfSession to string
+        if data["typeOfSession"]:
+            data["typeOfSession"] = str(data["typeOfSession"])
+
         # Create new session
         Session(**data).put()
 
