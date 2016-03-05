@@ -7,8 +7,8 @@ from protorpc import remote
 from google.appengine.ext import ndb
 
 from models import Conference
-from models import Session
-from models import SessionForm
+from models.session import Session
+from models.session import SessionForm
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
