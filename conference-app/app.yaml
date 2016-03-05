@@ -37,7 +37,7 @@ handlers:       # static then dynamic
   script: main.app
 
 - url: /_ah/spi/.*
-  script: conference.api
+  script: server.api
   secure: always
 
 libraries:
