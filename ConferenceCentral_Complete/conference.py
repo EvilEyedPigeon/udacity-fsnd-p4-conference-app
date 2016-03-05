@@ -36,6 +36,8 @@ from models import ConferenceForms
 from models import ConferenceQueryForm
 from models import ConferenceQueryForms
 from models import TeeShirtSize
+from models import Session
+from models import SessionForm
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -82,6 +84,11 @@ CONF_GET_REQUEST = endpoints.ResourceContainer(
 CONF_POST_REQUEST = endpoints.ResourceContainer(
     ConferenceForm,
     websafeConferenceKey=messages.StringField(1),
+)
+
+SESSION_POST_REQUEST = endpoints.ResourceContainer(
+    SessionForm,
+    websafeConferenceKey = messages.StringField(1),
 )
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -326,6 +333,60 @@ class ConferenceApi(remote.Service):
                 items=[self._copyConferenceToForm(conf, names[conf.organizerUserId]) for conf in \
                 conferences]
         )
+
+
+# - - - Sessions - - - - - - - - - - - - - - - - - - - -
+
+    def _createSessionObject(self, request):
+        """Create or update Session object, returning SessionForm/request."""
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+
+        # Trying to create a Key with an invalid value raises ProtocolBufferDecodeError.
+        # Using from google.net.proto.ProtocolBuffer import ProtocolBufferDecodeError
+        # does not work, as a different ProtocolBufferDecodeError is raised.
+        # See: https://github.com/googlecloudplatform/datastore-ndb-python/issues/143
+        # Catching all exceptions for now...
+
+        # get Session object from request; bail if not found
+        try:
+            conference = ndb.Key(urlsafe = request.websafeConferenceKey).get()
+        except:
+            conference = None
+        if not conference:
+            raise endpoints.NotFoundException(
+                'No conference found with key: %s' % request.websafeConferenceKey)
+
+        # Copy SessionForm/ProtoRPC Message into dict
+        data = {field.name: getattr(request, field.name) for field in request.all_fields()}
+        del data["websafeConferenceKey"] # keep only the session form
+
+        # Allocate session ID and generate session key
+        p_key = conference.key
+        s_id = Conference.allocate_ids(size = 1, parent = p_key)[0]
+        s_key = ndb.Key(Session, s_id, parent = p_key)
+        data["key"] = s_key
+        print "s_key:", s_key
+
+        # Create new session
+        Session(**data).put()
+
+        # Return form back
+        form = SessionForm()
+        for field in form.all_fields():
+            if hasattr(request, field.name):
+                setattr(form, field.name, getattr(request, field.name))
+        return form
+
+    # createSession(SessionForm, websafeConferenceKey)
+    @endpoints.method(SESSION_POST_REQUEST, SessionForm,
+            path='conference/{websafeConferenceKey}/session',
+            http_method='POST',
+            name='createSession')
+    def createSession(self, request):
+        """Create new session."""
+        return self._createSessionObject(request)
 
 
 # - - - Profile objects - - - - - - - - - - - - - - - - - - -
