@@ -21,7 +21,7 @@ from settings import ANDROID_AUDIENCE
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 
-#------ Requests objects ------------------------------------------------------
+#------ Request objects -------------------------------------------------------
     
 """Request for creating or updating a session.
 
