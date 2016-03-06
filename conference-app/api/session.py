@@ -2,13 +2,16 @@ from datetime import datetime
 
 import endpoints
 from protorpc import messages
+from protorpc import message_types
 from protorpc import remote
 
 from google.appengine.ext import ndb
 
 from models import Conference
 from models.session import Session
+from models.session import SessionType
 from models.session import SessionForm
+from models.session import SessionForms
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -22,6 +25,11 @@ API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 
 SESSION_POST_REQUEST = endpoints.ResourceContainer(
     SessionForm,
+    websafeConferenceKey = messages.StringField(1),
+)
+
+SESSIONS_BY_CONFERENCE_GET_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
     websafeConferenceKey = messages.StringField(1),
 )
 
@@ -81,7 +89,6 @@ class SessionApi(remote.Service):
                 setattr(form, field.name, getattr(request, field.name))
         return form
 
-    # createSession(SessionForm, websafeConferenceKey)
     @endpoints.method(SESSION_POST_REQUEST, SessionForm,
             path='conference/{websafeConferenceKey}/session',
             http_method='POST',
@@ -89,3 +96,50 @@ class SessionApi(remote.Service):
     def createSession(self, request):
         """Create new session."""
         return self._createSessionObject(request)
+
+
+    @endpoints.method(SESSIONS_BY_CONFERENCE_GET_REQUEST, SessionForms,
+            path='conference/{websafeConferenceKey}/sessions',
+            http_method='GET',
+            name='getConferenceSessions')
+    def getConferenceSessions(self, request):
+        """Given a conference, return all sessions."""
+
+        # get Session object from request; bail if not found
+        try:
+            conference = ndb.Key(urlsafe = request.websafeConferenceKey).get()
+        except:
+            conference = None
+        if not conference:
+            raise endpoints.NotFoundException(
+                'No conference found with key: %s' % request.websafeConferenceKey)
+
+        # create ancestor query for all key matches for this user
+        # sessions = Conference.query(ancestor = ndb.Key(Conference, user_id))
+        sessions = Session.query(ancestor = conference.key)
+
+        return SessionForms(
+            items = [self._copySessionToForm(s) for s in sessions]
+        )
+
+
+    def _copySessionToForm(self, session):
+        """Copy relevant fields from Session to SessionForm."""
+        form = SessionForm()
+        for field in form.all_fields():
+            if hasattr(session, field.name):
+                if field.name == "typeOfSession":
+                    # Convert session type string to Enum
+                    if getattr(session, field.name):
+                        setattr(form, field.name, getattr(SessionType, getattr(session, field.name)))
+                elif field.name == "date":
+                    # Convert Date to date string
+                    setattr(form, field.name, str(getattr(session, field.name)))
+                elif field.name == "startTime":
+                    # Convert Time to time string
+                    setattr(form, field.name, str(getattr(session, field.name)))
+                else:
+                    # Copy other fields
+                    setattr(form, field.name, getattr(session, field.name))
+        form.check_initialized()
+        return form

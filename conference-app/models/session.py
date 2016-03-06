@@ -13,7 +13,7 @@ class SessionType(messages.Enum):
 
 class Session(ndb.Model):
     """Session -- Session object"""
-    sessionName = ndb.StringProperty()
+    name = ndb.StringProperty()
     typeOfSession = ndb.StringProperty(default = "NOT_SPECIFIED")
     speaker = ndb.StringProperty()
     highlights = ndb.StringProperty(repeated = True)
@@ -23,10 +23,14 @@ class Session(ndb.Model):
 
 class SessionForm(messages.Message):
     """SessionForm -- Session outbound form message"""
-    sessionName = messages.StringField(1)
+    name = messages.StringField(1)
     typeOfSession = messages.EnumField("SessionType", 2)
     speaker = messages.StringField(3)
     highlights = messages.StringField(4, repeated = True)
     date = messages.StringField(5)
     startTime = messages.StringField(6)
     duration = messages.IntegerField(7, variant = messages.Variant.INT32) # in minutes
+
+class SessionForms(messages.Message):
+    """SessionForms -- multiple Session outbound form message"""
+    items = messages.MessageField(SessionForm, 1, repeated = True)
