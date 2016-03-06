@@ -56,6 +56,16 @@ SESSIONS_BY_TYPE_GET_REQUEST = endpoints.ResourceContainer(
     typeOfSession = messages.StringField(2, required = True)
 )
 
+"""Request for getting all sessions given by a speaker, across all conferences.
+
+Attributes:
+    speaker: Speaker name
+"""
+SESSIONS_BY_SPEAKER_GET_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    speaker = messages.StringField(1, required = True),
+)
+
 #-------------------------------------------------------------------------------
 
 @endpoints.api(name='session', version='v1', audiences=[ANDROID_AUDIENCE],
@@ -122,7 +132,7 @@ class SessionApi(remote.Service):
 
 
     @endpoints.method(SESSIONS_GET_REQUEST, SessionForms,
-            path='conference/{websafeConferenceKey}/sessions',
+            path='conference/{websafeConferenceKey}/session',
             http_method='GET',
             name='getConferenceSessions')
     def getConferenceSessions(self, request):
@@ -145,7 +155,7 @@ class SessionApi(remote.Service):
         )
 
     @endpoints.method(SESSIONS_BY_TYPE_GET_REQUEST, SessionForms,
-            path='conference/{websafeConferenceKey}/sessions/{typeOfSession}',
+            path='conference/{websafeConferenceKey}/session/{typeOfSession}',
             http_method='GET',
             name='getConferenceSessionsByType')
     def getConferenceSessionsByType(self, request):
@@ -164,6 +174,21 @@ class SessionApi(remote.Service):
 
         query = Session.query(ancestor = conference.key)
         sessions = query.filter(Session.typeOfSession == request.typeOfSession)
+
+        return SessionForms(
+            items = [self._copySessionToForm(s) for s in sessions]
+        )
+
+    @endpoints.method(SESSIONS_BY_SPEAKER_GET_REQUEST, SessionForms,
+            path='conference/session/{speaker}',
+            http_method='GET',
+            name='getSessionsBySpeaker')
+    def getSessionsBySpeaker(self, request):
+        """Given a speaker, return all sessions given by this particular speaker,
+        across all conferences.
+        """
+        query = Session.query()
+        sessions = query.filter(Session.speaker == request.speaker)
 
         return SessionForms(
             items = [self._copySessionToForm(s) for s in sessions]
