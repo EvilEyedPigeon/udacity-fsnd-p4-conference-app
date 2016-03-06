@@ -8,8 +8,11 @@ from google.appengine.ext import ndb
 from models import Profile
 from models import ConflictException
 from models.session import Session
+from models.session import SessionForms
 from models.wishlist import Wishlist
 from models.wishlist import WishlistForm
+
+from api.session import SessionApi
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -50,16 +53,8 @@ class WishlistApi(remote.Service):
         if not user:
             raise endpoints.UnauthorizedException('Authorization required')
 
-        # Get user wishlist (create new empty list if it does not exist)
-        user_id = getUserId(user)
-        p_key = ndb.Key(Profile, user_id)
-
-        wishlist = Wishlist.query(ancestor = p_key).get()
-        if not wishlist:
-            wl_id = Wishlist.allocate_ids(size = 1, parent = p_key)[0]
-            wl_key = ndb.Key(Wishlist, wl_id, parent = p_key)
-            wishlist = Wishlist(key = wl_key)
-            wishlist.put()
+        # Get user wishlist
+        wishlist = self._get_user_wish_list(user)
 
         # Check that session is not already in the list
         session_key = ndb.Key(urlsafe = request.websafeSessionKey)
@@ -72,3 +67,41 @@ class WishlistApi(remote.Service):
 
         # Return list of session keys
         return WishlistForm(sessionKeys = [s_key.urlsafe() for s_key in wishlist.sessionKeys])
+
+    @endpoints.method(message_types.VoidMessage, SessionForms,
+        path = "wishlist",
+        http_method = "GET",
+        name = "getSessionsInWishlist")
+    def getSessionsInWishlist(self, request):
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+
+        # Get user wishlist
+        wishlist = self._get_user_wish_list(user)
+
+        # Get sessions in wishlist
+        sessions = ndb.get_multi(wishlist.sessionKeys)
+
+        # Return list of session
+        session_service = SessionApi()
+        return SessionForms(
+            items = [session_service._copySessionToForm(s) for s in sessions]
+        )
+
+    def _get_user_wish_list(self, user):
+        """Get user wishlist (creates a new empty list if it does not exist)."""
+
+        # Get list
+        user_id = getUserId(user)
+        p_key = ndb.Key(Profile, user_id)
+        wishlist = Wishlist.query(ancestor = p_key).get()
+
+        # Init list if it does not exist
+        if not wishlist:
+            wl_id = Wishlist.allocate_ids(size = 1, parent = p_key)[0]
+            wl_key = ndb.Key(Wishlist, wl_id, parent = p_key)
+            wishlist = Wishlist(key = wl_key)
+            wishlist.put()
+
+        return wishlist

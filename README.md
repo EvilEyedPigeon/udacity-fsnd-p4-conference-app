@@ -47,6 +47,15 @@ Task 2: Add Sessions to User Wishlist
 Wishlists are stored as entities with a user Profile as the parent.
 They store a list of Session keys.
 
+Users can add any session to their wish list, even if they are not registered
+for the conference. It is common for users to want to go before registering.
+
+For the moment, it is also possible to add sessions that have already passed.
+Allow this? Users may still want to see info about past sessions, especially
+if more things are added later, like for example, notes about the session or
+video recordings. Then the wishlist would be more like a list of favorites
+than an actual "whish" list.
+
 - User can add session to wish list
 
 
