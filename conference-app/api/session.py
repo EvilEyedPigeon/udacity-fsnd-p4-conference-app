@@ -21,19 +21,42 @@ from settings import ANDROID_AUDIENCE
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#------ Requests objects ------------------------------------------------------
+    
+"""Request for creating or updating a session.
 
+Attributes:
+    SessionForm: Session inbound form
+    websafeConferenceKey: Conference key (URL-safe)
+"""
 SESSION_POST_REQUEST = endpoints.ResourceContainer(
     SessionForm,
     websafeConferenceKey = messages.StringField(1),
 )
 
-SESSIONS_BY_CONFERENCE_GET_REQUEST = endpoints.ResourceContainer(
+"""Request for getting all sessions in a conference.
+
+Attributes:
+    websafeConferenceKey: Conference key (URL-safe)
+"""
+SESSIONS_GET_REQUEST = endpoints.ResourceContainer(
     message_types.VoidMessage,
-    websafeConferenceKey = messages.StringField(1),
+    websafeConferenceKey = messages.StringField(1, required = True),
 )
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+"""Request for getting all sessions of a given type in a conference.
+
+Attributes:
+    websafeConferenceKey: Conference key (URL-safe)
+    typeOfSession: Type of session
+"""
+SESSIONS_BY_TYPE_GET_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeConferenceKey = messages.StringField(1, required = True),
+    typeOfSession = messages.StringField(2, required = True)
+)
+
+#-------------------------------------------------------------------------------
 
 @endpoints.api(name='session', version='v1', audiences=[ANDROID_AUDIENCE],
     allowed_client_ids=[WEB_CLIENT_ID, API_EXPLORER_CLIENT_ID, ANDROID_CLIENT_ID, IOS_CLIENT_ID],
@@ -98,7 +121,7 @@ class SessionApi(remote.Service):
         return self._createSessionObject(request)
 
 
-    @endpoints.method(SESSIONS_BY_CONFERENCE_GET_REQUEST, SessionForms,
+    @endpoints.method(SESSIONS_GET_REQUEST, SessionForms,
             path='conference/{websafeConferenceKey}/sessions',
             http_method='GET',
             name='getConferenceSessions')
@@ -114,9 +137,33 @@ class SessionApi(remote.Service):
             raise endpoints.NotFoundException(
                 'No conference found with key: %s' % request.websafeConferenceKey)
 
-        # create ancestor query for all key matches for this user
-        # sessions = Conference.query(ancestor = ndb.Key(Conference, user_id))
+        # create ancestor query for all key matches for this conference
         sessions = Session.query(ancestor = conference.key)
+
+        return SessionForms(
+            items = [self._copySessionToForm(s) for s in sessions]
+        )
+
+    @endpoints.method(SESSIONS_BY_TYPE_GET_REQUEST, SessionForms,
+            path='conference/{websafeConferenceKey}/sessions/{typeOfSession}',
+            http_method='GET',
+            name='getConferenceSessionsByType')
+    def getConferenceSessionsByType(self, request):
+        """Given a conference, return all sessions of a specified type
+        (e.g. lecture, keynote, workshop).
+        """
+
+        # get Session object from request; bail if not found
+        try:
+            conference = ndb.Key(urlsafe = request.websafeConferenceKey).get()
+        except:
+            conference = None
+        if not conference:
+            raise endpoints.NotFoundException(
+                'No conference found with key: %s' % request.websafeConferenceKey)
+
+        query = Session.query(ancestor = conference.key)
+        sessions = query.filter(Session.typeOfSession == request.typeOfSession)
 
         return SessionForms(
             items = [self._copySessionToForm(s) for s in sessions]

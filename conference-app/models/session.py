@@ -8,8 +8,10 @@ from google.appengine.ext import ndb
 class SessionType(messages.Enum):
     """SessionType -- Session type enumeration value"""
     NOT_SPECIFIED = 1
-    PRESENTATION = 2
-    OTHER = 3
+    LECTURE = 2
+    KEYNOTE = 3
+    WORKSHOP = 4
+    OTHER = 5
 
 class Session(ndb.Model):
     """Session -- Session object"""
