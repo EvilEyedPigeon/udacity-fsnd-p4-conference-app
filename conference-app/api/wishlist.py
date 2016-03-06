@@ -5,8 +5,8 @@ from protorpc import remote
 
 from google.appengine.ext import ndb
 
-from models import Profile
 from models import ConflictException
+from models.profile import Profile
 from models.session import Session
 from models.session import SessionForms
 from models.wishlist import Wishlist

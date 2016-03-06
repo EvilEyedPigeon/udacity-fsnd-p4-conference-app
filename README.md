@@ -9,6 +9,10 @@ Project 4: Conference Organization App
 
 Starting code cloned from https://github.com/udacity/ud858
 
+Starting app included functionality related to conferences and user profiles:
+creating a profile, creating and updating conferences, querying conferences,
+and registering for conferences. 
+
 
 Structure
 =========
@@ -30,6 +34,7 @@ TODO
 ====
 
 - Change code to use Python coding conventions
+- Keep websafe keys in forms??? 
 
 
 Task 1: Add Sessions to a Conference

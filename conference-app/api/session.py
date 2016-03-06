@@ -7,7 +7,7 @@ from protorpc import remote
 
 from google.appengine.ext import ndb
 
-from models import Conference
+from models.conference import Conference
 from models.session import Session
 from models.session import SessionType
 from models.session import SessionForm

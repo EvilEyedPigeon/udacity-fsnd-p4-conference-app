@@ -25,17 +25,17 @@ from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
 from models import ConflictException
-from models import Profile
-from models import ProfileMiniForm
-from models import ProfileForm
 from models import StringMessage
 from models import BooleanMessage
-from models import Conference
-from models import ConferenceForm
-from models import ConferenceForms
-from models import ConferenceQueryForm
-from models import ConferenceQueryForms
-from models import TeeShirtSize
+from models.profile import Profile
+from models.profile import ProfileMiniForm
+from models.profile import ProfileForm
+from models.profile import TeeShirtSize
+from models.conference import Conference
+from models.conference import ConferenceForm
+from models.conference import ConferenceForms
+from models.conference import ConferenceQueryForm
+from models.conference import ConferenceQueryForms
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID

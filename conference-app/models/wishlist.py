@@ -1,7 +1,6 @@
 """Wishlist App Engine data & ProtoRPC models."""
 
 from protorpc import messages
-
 from google.appengine.ext import ndb
 
 from models.session import Session

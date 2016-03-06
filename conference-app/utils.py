@@ -4,7 +4,9 @@ import time
 import uuid
 
 from google.appengine.api import urlfetch
-from models import Profile
+
+from models.profile import Profile
+
 
 def getUserId(user, id_type="email"):
     if id_type == "email":

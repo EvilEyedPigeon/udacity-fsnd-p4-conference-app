@@ -1,4 +1,4 @@
-"""Session App Engine data & ProtoRPC models."""
+"""Conference session App Engine data & ProtoRPC models."""
 
 from protorpc import messages
 
