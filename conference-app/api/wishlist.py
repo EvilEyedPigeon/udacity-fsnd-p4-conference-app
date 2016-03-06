@@ -68,6 +68,30 @@ class WishlistApi(remote.Service):
         # Return list of session keys
         return WishlistForm(sessionKeys = [s_key.urlsafe() for s_key in wishlist.sessionKeys])
 
+    @endpoints.method(WISHLIST_POST_REQUEST, WishlistForm,
+        path = "wishlist/{websafeSessionKey}",
+        http_method = "DELETE",
+        name = "deleteSessionInWishlist")
+    def deleteSessionInWishlist(self, request):
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+
+        # Get user wishlist
+        wishlist = self._get_user_wish_list(user)
+
+        # Check that session is not already in the list
+        session_key = ndb.Key(urlsafe = request.websafeSessionKey)
+        if session_key not in wishlist.sessionKeys:
+            raise ConflictException("Session not in wishlist")
+
+        # Add to list
+        wishlist.sessionKeys.remove(session_key)
+        wishlist.put()
+
+        # Return list of session keys
+        return WishlistForm(sessionKeys = [s_key.urlsafe() for s_key in wishlist.sessionKeys])
+
     @endpoints.method(message_types.VoidMessage, SessionForms,
         path = "wishlist",
         http_method = "GET",
