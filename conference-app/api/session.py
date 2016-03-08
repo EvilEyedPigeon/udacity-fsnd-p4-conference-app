@@ -4,7 +4,6 @@ import endpoints
 from protorpc import messages
 from protorpc import message_types
 from protorpc import remote
-
 from google.appengine.ext import ndb
 
 from models.conference import Conference
@@ -170,6 +169,7 @@ class SessionApi(remote.Service):
             items = [_copySessionToForm(s) for s in sessions]
         )
 
+    # TODO: speaker should be a key
     @endpoints.method(SESSIONS_BY_SPEAKER_GET_REQUEST, SessionForms,
             path='conference/sessions/{speaker}',
             http_method='GET',

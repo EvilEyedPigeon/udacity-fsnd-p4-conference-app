@@ -2,11 +2,14 @@ import endpoints
 from protorpc import messages
 from protorpc import message_types
 from protorpc import remote
+from google.appengine.ext import ndb
 
 from models import ConflictException
+from models.conference import Conference
 from models.speaker import Speaker
 from models.speaker import SpeakerForm
 from models.speaker import SpeakerForms
+from models.session import Session
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -15,6 +18,12 @@ from settings import ANDROID_AUDIENCE
 
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
+
+
+SPEAKERS_BY_CONF_GET_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeConferenceKey = messages.StringField(1, required = True),
+)
 
 
 @endpoints.api(name='speaker', version='v1', audiences=[ANDROID_AUDIENCE],
@@ -32,7 +41,6 @@ class SpeakerApi(remote.Service):
         """Create new speaker."""
         return self._createSpeakerObject(request)
 
-    # get list of speakers (with websafe key)
     @endpoints.method(message_types.VoidMessage, SpeakerForms,
             path = "speaker",
             http_method = "GET",
@@ -43,6 +51,35 @@ class SpeakerApi(remote.Service):
         return SpeakerForms(
             items = [self._copySpeakerToForm(s) for s in speakers]
         )
+
+    @endpoints.method(SPEAKERS_BY_CONF_GET_REQUEST, SpeakerForms,
+            path = "speaker/conference/{websafeConferenceKey}",
+            http_method = "GET",
+            name = "getConferenceSpeakers")
+    def getConferenceSpeakers(self, request):
+        """Given a conference, get the list of all speakers."""
+
+        # get Session object from request; bail if not found
+        try:
+            conference = ndb.Key(urlsafe = request.websafeConferenceKey).get()
+        except:
+            conference = None
+        if not conference:
+            raise endpoints.NotFoundException(
+                'No conference found with key: %s' % request.websafeConferenceKey)
+
+        # create ancestor query for all key matches for this conference
+        sessions = Session.query(ancestor = conference.key).fetch()
+
+        # only use valid keys and ignore duplicates
+        speaker_keys = set([s.speakerKey for s in sessions if s.speakerKey])
+
+        speakers = ndb.get_multi(speaker_keys)
+
+        return SpeakerForms(
+            items = [self._copySpeakerToForm(s) for s in speakers]
+        )
+
 
 
     def _createSpeakerObject(self, request):
