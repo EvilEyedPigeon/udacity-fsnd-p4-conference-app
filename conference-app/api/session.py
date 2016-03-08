@@ -60,11 +60,11 @@ SESSIONS_BY_TYPE_GET_REQUEST = endpoints.ResourceContainer(
 """Request for getting all sessions given by a speaker, across all conferences.
 
 Attributes:
-    speaker: Speaker name
+    websafeSpeakerKey: Speaker key (URL-safe)
 """
 SESSIONS_BY_SPEAKER_GET_REQUEST = endpoints.ResourceContainer(
     message_types.VoidMessage,
-    speaker = messages.StringField(1, required = True),
+    websafeSpeakerKey = messages.StringField(1, required = True),
 )
 
 #-------------------------------------------------------------------------------
@@ -169,17 +169,24 @@ class SessionApi(remote.Service):
             items = [_copySessionToForm(s) for s in sessions]
         )
 
-    # TODO: speaker should be a key
     @endpoints.method(SESSIONS_BY_SPEAKER_GET_REQUEST, SessionForms,
-            path='conference/sessions/{speaker}',
+            path='conference/sessions/{websafeSpeakerKey}',
             http_method='GET',
             name='getSessionsBySpeaker')
     def getSessionsBySpeaker(self, request):
         """Given a speaker, return all sessions given by this particular speaker,
         across all conferences.
         """
+        try:
+            speaker = ndb.Key(urlsafe = request.websafeSpeakerKey).get()
+        except:
+            speaker = None
+        if not speaker:
+            raise endpoints.NotFoundException(
+                'No speaker found with key: %s' % request.websafeSpeakerKey)
+
         query = Session.query()
-        sessions = query.filter(Session.speaker == request.speaker)
+        sessions = query.filter(Session.speakerKey == speaker.key)
 
         return SessionForms(
             items = [_copySessionToForm(s) for s in sessions]
