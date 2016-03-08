@@ -8,10 +8,12 @@ from protorpc import remote
 from google.appengine.ext import ndb
 
 from models.conference import Conference
+from models.speaker import Speaker
 from models.session import Session
 from models.session import SessionType
 from models.session import SessionForm
 from models.session import SessionForms
+from models.session import _copySessionToForm, _copyFormToSession
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -97,29 +99,18 @@ class SessionApi(remote.Service):
             raise endpoints.NotFoundException(
                 'No conference found with key: %s' % request.websafeConferenceKey)
 
-        # Copy SessionForm/ProtoRPC Message into dict
-        data = {field.name: getattr(request, field.name) for field in request.all_fields()}
-        del data["websafeConferenceKey"] # keep only the session form
-
         # Allocate session ID and generate session key
         p_key = conference.key
         s_id = Conference.allocate_ids(size = 1, parent = p_key)[0]
         s_key = ndb.Key(Session, s_id, parent = p_key)
-        data["key"] = s_key
-        print "s_key:", s_key
-
-        # Convert typeOfSession to string
-        if data["typeOfSession"]:
-            data["typeOfSession"] = str(data["typeOfSession"])
 
         # Create new session
-        Session(**data).put()
+        session = _copyFormToSession(request)
+        session.key = s_key # set the key since this is a new object
+        session.put()
 
         # Return form back
-        form = SessionForm()
-        for field in form.all_fields():
-            if hasattr(request, field.name):
-                setattr(form, field.name, getattr(request, field.name))
+        form = _copySessionToForm(session)
         return form
 
     @endpoints.method(SESSION_POST_REQUEST, SessionForm,
@@ -132,7 +123,7 @@ class SessionApi(remote.Service):
 
 
     @endpoints.method(SESSIONS_GET_REQUEST, SessionForms,
-            path='conference/{websafeConferenceKey}/session',
+            path='conference/{websafeConferenceKey}/sessions',
             http_method='GET',
             name='getConferenceSessions')
     def getConferenceSessions(self, request):
@@ -151,11 +142,11 @@ class SessionApi(remote.Service):
         sessions = Session.query(ancestor = conference.key)
 
         return SessionForms(
-            items = [self._copySessionToForm(s) for s in sessions]
+            items = [_copySessionToForm(s) for s in sessions]
         )
 
     @endpoints.method(SESSIONS_BY_TYPE_GET_REQUEST, SessionForms,
-            path='conference/{websafeConferenceKey}/session/{typeOfSession}',
+            path='conference/{websafeConferenceKey}/sessions/{typeOfSession}',
             http_method='GET',
             name='getConferenceSessionsByType')
     def getConferenceSessionsByType(self, request):
@@ -176,11 +167,11 @@ class SessionApi(remote.Service):
         sessions = query.filter(Session.typeOfSession == request.typeOfSession)
 
         return SessionForms(
-            items = [self._copySessionToForm(s) for s in sessions]
+            items = [_copySessionToForm(s) for s in sessions]
         )
 
     @endpoints.method(SESSIONS_BY_SPEAKER_GET_REQUEST, SessionForms,
-            path='conference/session/{speaker}',
+            path='conference/sessions/{speaker}',
             http_method='GET',
             name='getSessionsBySpeaker')
     def getSessionsBySpeaker(self, request):
@@ -191,27 +182,5 @@ class SessionApi(remote.Service):
         sessions = query.filter(Session.speaker == request.speaker)
 
         return SessionForms(
-            items = [self._copySessionToForm(s) for s in sessions]
+            items = [_copySessionToForm(s) for s in sessions]
         )
-
-
-    def _copySessionToForm(self, session):
-        """Copy relevant fields from Session to SessionForm."""
-        form = SessionForm()
-        for field in form.all_fields():
-            if hasattr(session, field.name):
-                if field.name == "typeOfSession":
-                    # Convert session type string to Enum
-                    if getattr(session, field.name):
-                        setattr(form, field.name, getattr(SessionType, getattr(session, field.name)))
-                elif field.name == "date":
-                    # Convert Date to date string
-                    setattr(form, field.name, str(getattr(session, field.name)))
-                elif field.name == "startTime":
-                    # Convert Time to time string
-                    setattr(form, field.name, str(getattr(session, field.name)))
-                else:
-                    # Copy other fields
-                    setattr(form, field.name, getattr(session, field.name))
-        form.check_initialized()
-        return form

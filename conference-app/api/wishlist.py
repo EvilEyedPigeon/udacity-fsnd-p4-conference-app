@@ -9,10 +9,9 @@ from models import ConflictException
 from models.profile import Profile
 from models.session import Session
 from models.session import SessionForms
+from models.session import _copySessionToForm
 from models.wishlist import Wishlist
 from models.wishlist import WishlistForm
-
-from api.session import SessionApi
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -108,9 +107,8 @@ class WishlistApi(remote.Service):
         sessions = ndb.get_multi(wishlist.sessionKeys)
 
         # Return list of session
-        session_service = SessionApi()
         return SessionForms(
-            items = [session_service._copySessionToForm(s) for s in sessions]
+            items = [_copySessionToForm(s) for s in sessions]
         )
 
     def _get_user_wish_list(self, user):
