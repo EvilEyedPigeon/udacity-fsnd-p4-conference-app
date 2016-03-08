@@ -10,6 +10,8 @@ from models.speaker import Speaker
 from models.speaker import SpeakerForm
 from models.speaker import SpeakerForms
 from models.session import Session
+from models.session import SessionForms
+from models.session import _copySessionToForm
 
 from settings import WEB_CLIENT_ID
 from settings import ANDROID_CLIENT_ID
@@ -23,6 +25,12 @@ API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 SPEAKERS_BY_CONF_GET_REQUEST = endpoints.ResourceContainer(
     message_types.VoidMessage,
     websafeConferenceKey = messages.StringField(1, required = True),
+)
+
+SESSIONS_BY_CONF_AND_SPEAKER_GET_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeSpeakerKey = messages.StringField(1, required = True),
+    websafeConferenceKey = messages.StringField(2, required = True),
 )
 
 
@@ -59,7 +67,7 @@ class SpeakerApi(remote.Service):
     def getConferenceSpeakers(self, request):
         """Given a conference, get the list of all speakers."""
 
-        # get Session object from request; bail if not found
+        # get Conference object from request; bail if not found
         try:
             conference = ndb.Key(urlsafe = request.websafeConferenceKey).get()
         except:
@@ -79,6 +87,43 @@ class SpeakerApi(remote.Service):
         return SpeakerForms(
             items = [self._copySpeakerToForm(s) for s in speakers]
         )
+
+    @endpoints.method(SESSIONS_BY_CONF_AND_SPEAKER_GET_REQUEST, SessionForms,
+            path = "speaker/{websafeSpeakerKey}/conference/{websafeConferenceKey}",
+            http_method = "GET",
+            name = "getSessionsByConferenceSpeaker")
+    def getSessionsByConferenceSpeaker(self, request):
+        """Given a speaker and a conference, return all sessions given by
+        the speaker at the conference.
+        """
+
+        # get Speaker object from request; bail if not found
+        try:
+            speaker = ndb.Key(urlsafe = request.websafeSpeakerKey).get()
+        except:
+            speaker = None
+        if not speaker:
+            raise endpoints.NotFoundException(
+                'No speaker found with key: %s' % request.websafeSpeakerKey)
+
+        # get Conference object from request; bail if not found
+        try:
+            conference = ndb.Key(urlsafe = request.websafeConferenceKey).get()
+        except:
+            conference = None
+        if not conference:
+            raise endpoints.NotFoundException(
+                'No conference found with key: %s' % request.websafeConferenceKey)
+
+
+        # Load sessions
+        query = Session.query(ancestor = conference.key)
+        sessions = query.filter(Session.speakerKey == speaker.key)
+
+        return SessionForms(
+            items = [_copySessionToForm(s) for s in sessions]
+        )
+
 
 
 
