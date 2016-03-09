@@ -36,25 +36,6 @@ project for the API methods makes it hard to find related methods when all the
 methods are listed together.
 
 
-Usage
------
-
-- Clone
-- Set app ID
-- Set client IDs
-- Deploy
-- Test with API explorer
-
-TODO
-----
-
-- Change code to use Python coding conventions
-- Keep websafe keys in forms??? 
-- Divided into multiple services.
-  - May consider combining into a single API latter, even if implementation is broken down into multiple files.
-- Parsing dates and times
-
-
 Task 1: Add Sessions to a Conference
 ------------------------------------
 
@@ -105,17 +86,21 @@ Task 2: Add Sessions to User Wishlist
 Wishlists are stored as entities with a user Profile as the parent.
 They store a list of Session keys.
 
-Users can add any session to their wish list, even if they are not registered
-for the conference. It is common for users to want to go before registering.
+It is common for users to want to go to a conference before registering,
+users can add any session to their wish list, even if they are not registered
+for the conference. 
 
 For the moment, it is also possible to add sessions that have already passed.
-Allow this? Users may still want to see info about past sessions, especially
-if more things are added later, like for example, notes about the session or
-video recordings. Then the wishlist would be more like a list of favorites
-than an actual "whish" list.
+Should this be allowed? It is possible that users will want to see info about
+past sessions, especially if more things are added later, like for example,
+notes about the session or video recordings. Then the wishlist would be more
+like a list of favorites than an actual "wish" list.
 
-- User can add session to wish list
+Required API methods (in ```wishlist``` module):
 
+- addSessionToWishlist(websafeSessionKey)
+- deleteSessionInWishlist(websafeSessionKey)
+- getSessionsInWishlist()
 
 
 Task 3: Work on Indexes and Queries
@@ -125,3 +110,22 @@ Task 3: Work on Indexes and Queries
 Task 4: Add a Task
 ------------------
 
+
+
+Usage
+-----
+
+- Clone
+- Set app ID
+- Set client IDs
+- Deploy
+- Test with API explorer
+
+TODO
+----
+
+- Change code to use Python coding conventions
+- Keep websafe keys in forms??? 
+- Divided into multiple services.
+  - May consider combining into a single API latter, even if implementation is broken down into multiple files.
+- Parsing dates and times

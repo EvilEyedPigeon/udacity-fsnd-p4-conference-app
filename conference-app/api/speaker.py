@@ -22,6 +22,8 @@ EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 
 
+#------ Request objects -------------------------------------------------------
+
 SPEAKERS_BY_CONF_GET_REQUEST = endpoints.ResourceContainer(
     message_types.VoidMessage,
     websafeConferenceKey = messages.StringField(1, required = True),
@@ -34,17 +36,18 @@ SESSIONS_BY_CONF_AND_SPEAKER_GET_REQUEST = endpoints.ResourceContainer(
 )
 
 
+#------ API methods ------------------------------------------------------------
+
 @endpoints.api(name='speaker', version='v1', audiences=[ANDROID_AUDIENCE],
     allowed_client_ids=[WEB_CLIENT_ID, API_EXPLORER_CLIENT_ID, ANDROID_CLIENT_ID, IOS_CLIENT_ID],
     scopes=[EMAIL_SCOPE])
 class SpeakerApi(remote.Service):
     """Speaker API v0.1"""
 
-    # create speaker
     @endpoints.method(SpeakerForm, SpeakerForm,
             path = "speaker",
             http_method = "POST",
-            name = "create")
+            name = "createSpeaker")
     def createSpeaker(self, request):
         """Create new speaker."""
         return self._createSpeakerObject(request)
@@ -67,7 +70,7 @@ class SpeakerApi(remote.Service):
     def getConferenceSpeakers(self, request):
         """Given a conference, get the list of all speakers."""
 
-        # get Conference object from request; bail if not found
+        # Get Conference object from request
         try:
             conference = ndb.Key(urlsafe = request.websafeConferenceKey).get()
         except:
@@ -76,12 +79,13 @@ class SpeakerApi(remote.Service):
             raise endpoints.NotFoundException(
                 'No conference found with key: %s' % request.websafeConferenceKey)
 
-        # create ancestor query for all key matches for this conference
+        # Get all sessions for the conference
         sessions = Session.query(ancestor = conference.key).fetch()
 
-        # only use valid keys and ignore duplicates
+        # Only use valid keys and ignore duplicates
         speaker_keys = set([s.speakerKey for s in sessions if s.speakerKey])
 
+        # Get the speakers
         speakers = ndb.get_multi(speaker_keys)
 
         return SpeakerForms(
@@ -97,7 +101,7 @@ class SpeakerApi(remote.Service):
         the speaker at the conference.
         """
 
-        # get Speaker object from request; bail if not found
+        # Get Speaker object from request
         try:
             speaker = ndb.Key(urlsafe = request.websafeSpeakerKey).get()
         except:
@@ -106,7 +110,7 @@ class SpeakerApi(remote.Service):
             raise endpoints.NotFoundException(
                 'No speaker found with key: %s' % request.websafeSpeakerKey)
 
-        # get Conference object from request; bail if not found
+        # Get Conference object from request
         try:
             conference = ndb.Key(urlsafe = request.websafeConferenceKey).get()
         except:
@@ -114,7 +118,6 @@ class SpeakerApi(remote.Service):
         if not conference:
             raise endpoints.NotFoundException(
                 'No conference found with key: %s' % request.websafeConferenceKey)
-
 
         # Load sessions
         query = Session.query(ancestor = conference.key)
@@ -125,13 +128,9 @@ class SpeakerApi(remote.Service):
         )
 
 
-
-
     def _createSpeakerObject(self, request):
         """Create Speaker object, returning SpeakerForm/request."""
         
-        # Note: When creating a new speaker, the websafeKey in the form is ignored
-
         # Check user
         user = endpoints.get_current_user()
         if not user:

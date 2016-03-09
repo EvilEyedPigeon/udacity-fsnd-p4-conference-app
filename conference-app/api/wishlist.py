@@ -23,6 +23,7 @@ from utils import getUserId
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 
+
 #------ Request objects -------------------------------------------------------
     
 """Request for adding a session to the user's wishlist.
@@ -35,7 +36,8 @@ WISHLIST_POST_REQUEST = endpoints.ResourceContainer(
     websafeSessionKey = messages.StringField(1, required = True)
 )
 
-#-------------------------------------------------------------------------------
+
+#------ API methods ------------------------------------------------------------
 
 @endpoints.api(name='wishlist', version='v1', audiences=[ANDROID_AUDIENCE],
     allowed_client_ids=[WEB_CLIENT_ID, API_EXPLORER_CLIENT_ID, ANDROID_CLIENT_ID, IOS_CLIENT_ID],
@@ -48,12 +50,13 @@ class WishlistApi(remote.Service):
         http_method = "POST",
         name = "addSessionToWishlist")
     def addSessionToWishlist(self, request):
+        """Add a session to the user's wishlist."""
         user = endpoints.get_current_user()
         if not user:
             raise endpoints.UnauthorizedException('Authorization required')
 
         # Get user wishlist
-        wishlist = self._get_user_wish_list(user)
+        wishlist = self._getUserWishList(user)
 
         # Check that session is not already in the list
         session_key = ndb.Key(urlsafe = request.websafeSessionKey)
@@ -72,12 +75,13 @@ class WishlistApi(remote.Service):
         http_method = "DELETE",
         name = "deleteSessionInWishlist")
     def deleteSessionInWishlist(self, request):
+        """Remove a session from the user's wishlist."""
         user = endpoints.get_current_user()
         if not user:
             raise endpoints.UnauthorizedException('Authorization required')
 
         # Get user wishlist
-        wishlist = self._get_user_wish_list(user)
+        wishlist = self._getUserWishList(user)
 
         # Check that session is not already in the list
         session_key = ndb.Key(urlsafe = request.websafeSessionKey)
@@ -96,12 +100,13 @@ class WishlistApi(remote.Service):
         http_method = "GET",
         name = "getSessionsInWishlist")
     def getSessionsInWishlist(self, request):
+        """Get list of sessions in users's wishlist."""
         user = endpoints.get_current_user()
         if not user:
             raise endpoints.UnauthorizedException('Authorization required')
 
         # Get user wishlist
-        wishlist = self._get_user_wish_list(user)
+        wishlist = self._getUserWishList(user)
 
         # Get sessions in wishlist
         sessions = ndb.get_multi(wishlist.sessionKeys)
@@ -111,7 +116,7 @@ class WishlistApi(remote.Service):
             items = [_copySessionToForm(s) for s in sessions]
         )
 
-    def _get_user_wish_list(self, user):
+    def _getUserWishList(self, user):
         """Get user wishlist (creates a new empty list if it does not exist)."""
 
         # Get list
@@ -127,3 +132,5 @@ class WishlistApi(remote.Service):
             wishlist.put()
 
         return wishlist
+
+#-------------------------------------------------------------------------------
