@@ -146,7 +146,7 @@ by this speaker at this conference, also add a new Memcache entry that features 
 session names. You can choose the Memcache key. The logic above should be handled using
 App Engine's Task Queue.*
 
-Required API methods (in ```wishlist``` module):
+Required API methods (in ```speaker``` module):
 
 - getFeaturedSpeaker()
 
