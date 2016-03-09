@@ -3,8 +3,10 @@ from protorpc import messages
 from protorpc import message_types
 from protorpc import remote
 from google.appengine.ext import ndb
+from google.appengine.api import memcache
 
 from models import ConflictException
+from models import StringMessage
 from models.conference import Conference
 from models.speaker import Speaker
 from models.speaker import SpeakerForm
@@ -20,6 +22,8 @@ from settings import ANDROID_AUDIENCE
 
 EMAIL_SCOPE = endpoints.EMAIL_SCOPE
 API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
+
+MEMCACHE_FEATURED_SPEAKER_KEY = "MEMCACHE_FEATURED_SPEAKER_KEY"
 
 
 #------ Request objects -------------------------------------------------------
@@ -169,3 +173,44 @@ class SpeakerApi(remote.Service):
                 setattr(form, field.name, getattr(speaker, field.name))
         form.check_initialized()
         return form
+
+
+    @staticmethod
+    def _cacheFeaturedSpeaker(websafeSpeakerKey, websafeConferenceKey):
+        """Create featured speaker announcement & assign to memcache.
+
+        Only adds an announcement if the speaker has more than one session
+        by the speaker at the conference.
+        """
+
+        # Get speaker
+        speaker = ndb.Key(urlsafe = websafeSpeakerKey).get()
+
+        # Get conference
+        conference = ndb.Key(urlsafe = websafeConferenceKey).get()
+
+        # Get speaker sessions
+        q = Session.query(ancestor = conference.key)
+        sessions = q.filter(Session.speakerKey == speaker.key).fetch()
+
+        # Only feature if the speaker has more than on session
+        if len(sessions) > 1:
+            announcement = "Featured speaker: " + speaker.name
+            announcement += "\nSessions:"
+            for s in  sessions:
+                announcement += "\n- " + s.name
+            memcache.set(MEMCACHE_FEATURED_SPEAKER_KEY, announcement)
+        else:
+            announcement = "Not a featured speaker..."
+            memcache.set(MEMCACHE_FEATURED_SPEAKER_KEY, announcement)
+
+        return announcement
+
+
+    @endpoints.method(message_types.VoidMessage, StringMessage,
+            path='speaker/featured/get',
+            http_method='GET',
+            name='getFeaturedSpeaker')
+    def getFeaturedSpeaker(self, request):
+        """Return featured speaker announcement from memcache."""
+        return StringMessage(data=memcache.get(MEMCACHE_FEATURED_SPEAKER_KEY) or "")

@@ -5,6 +5,7 @@ from protorpc import messages
 from protorpc import message_types
 from protorpc import remote
 from google.appengine.api import memcache
+from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
 from models.conference import Conference
@@ -191,19 +192,12 @@ class SessionApi(remote.Service):
         session.key = s_key # set the key since this is a new object
         session.put()
 
-        # Check for featured speakers
+        # Check for featured speakers - delegate to a task
         if session.speakerKey:
-            q = Session.query(ancestor = conference.key)
-            speaker_sessions = q.filter(Session.speakerKey == session.speakerKey).fetch()
-            MEMCACHE_ANNOUNCEMENTS_KEY = "MEMCACHE_FEATURED_SPEAKER_KEY"
-            if len(speaker_sessions) > 1:
-                speaker = session.speakerKey.get()
-                print "Featured speaker!!! "
-                announcement = "Featured speaker!!! " + speaker.name
-                memcache.set(MEMCACHE_ANNOUNCEMENTS_KEY, announcement)
-            else:
-                announcement = "Not a featured speaker..."
-                memcache.set(MEMCACHE_ANNOUNCEMENTS_KEY, announcement)
+            taskqueue.add(params={'websafeSpeakerKey': session.speakerKey.urlsafe(),
+                'websafeConferenceKey': conference.key.urlsafe()},
+                url='/tasks/set_feature_speaker'
+            )
 
         # Return form back
         form = _copySessionToForm(session)
