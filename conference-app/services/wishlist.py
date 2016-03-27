@@ -6,7 +6,6 @@ from models.session import SessionForms
 from models.session import _copySessionToForm
 from models.wishlist import Wishlist
 from models.wishlist import WishlistForm
-
 from services import BaseService
 from services import login_required
 
