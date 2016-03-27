@@ -7,7 +7,6 @@ from models import StringMessage
 from models.profile import Profile
 from models.session import Session
 from models.session import SessionForms
-from models.session import _copySessionToForm
 from models.speaker import Speaker
 from models.speaker import SpeakerForm
 from models.speaker import SpeakerForms
@@ -45,15 +44,17 @@ class SpeakerService(BaseService):
         if speaker:
             raise ConflictException("Speaker already exists with email: %s" % request.email)
 
+        # Allocate speaker ID and generate speaker key
+        s_id = Speaker.allocate_ids(size = 1)[0]
+        s_key = ndb.Key(Speaker, s_id)
+
         # Create new speaker
-        data = {field.name: getattr(request, field.name) for field in request.all_fields()}
-        del data["websafeKey"]
-        speaker = Speaker(**data) # TODO: add function to get form from request
-        speaker_key = speaker.put()
+        speaker = Speaker.to_object(request)
+        speaker.key = s_key # set the key since this is a new object
+        speaker.put()
 
         # Returm form back
-        form = self._copy_speaker_to_form(speaker)
-        return form
+        return speaker.to_form()
 
     def get_speakers(self):
         """Get list of all speakers.
@@ -63,7 +64,7 @@ class SpeakerService(BaseService):
         """
         speakers = Speaker.query().fetch()
         return SpeakerForms(
-            items = [self._copy_speaker_to_form(s) for s in speakers]
+            items = [s.to_form() for s in speakers]
         )
 
     def get_conference_speakers(self, websafe_conference_key):
@@ -88,7 +89,7 @@ class SpeakerService(BaseService):
         speakers = ndb.get_multi(speaker_keys)
 
         return SpeakerForms(
-            items = [self._copy_speaker_to_form(s) for s in speakers]
+            items = [s.to_form() for s in speakers]
         )
 
     def get_sessions_by_conference_speaker(self, websafe_speaker_key, websafe_conference_key):
@@ -113,7 +114,7 @@ class SpeakerService(BaseService):
         sessions = query.filter(Session.speakerKey == speaker.key)
 
         return SessionForms(
-            items = [_copySessionToForm(s) for s in sessions]
+            items = [s.to_form() for s in sessions]
         )
 
     def get_featured_speaker(self):
@@ -161,16 +162,3 @@ class SpeakerService(BaseService):
             memcache.set(MEMCACHE_FEATURED_SPEAKER_KEY, announcement)
 
         return announcement
-
-    def _copy_speaker_to_form(self, speaker):
-        """Copy relevant fields from Speaker to SpeakerForm."""
-        form = SpeakerForm()
-        for field in form.all_fields():
-            if field.name == "websafeKey":
-                # Set URL-safe key
-                setattr(form, field.name, speaker.key.urlsafe())
-            elif hasattr(speaker, field.name):
-                # Copy other fields
-                setattr(form, field.name, getattr(speaker, field.name))
-        form.check_initialized()
-        return form

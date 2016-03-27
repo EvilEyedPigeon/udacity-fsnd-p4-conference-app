@@ -35,7 +35,7 @@ class WishlistService(BaseService):
         wishlist.put()
 
         # Return list of session keys
-        return WishlistForm(sessionKeys = [s_key.urlsafe() for s_key in wishlist.sessionKeys])
+        return wishlist.to_form()
 
     @login_required
     def delete_session_in_wishlist(self, websafe_session_key):
@@ -60,7 +60,7 @@ class WishlistService(BaseService):
         wishlist.put()
 
         # Return list of session keys
-        return WishlistForm(sessionKeys = [s_key.urlsafe() for s_key in wishlist.sessionKeys])
+        return wishlist.to_form()
 
     @login_required
     def get_sessions_in_wishlist(self):

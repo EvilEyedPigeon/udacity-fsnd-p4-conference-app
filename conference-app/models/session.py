@@ -31,12 +31,12 @@ class Session(ndb.Model):
 
     def to_form(self):
         """Convert Session to SessionForm."""
-        return _copySessionToForm(self)
+        return _copy_session_to_form(self)
 
     @staticmethod
     def to_object(request):
         """Convert SessionForm/request to Session."""
-        return _copyFormToSession(request)
+        return _copy_form_to_session(request)
 
 
 class SessionForm(messages.Message):
@@ -58,7 +58,7 @@ class SessionForms(messages.Message):
 
 #------ Mapping functions -----------------------------------------------------
 
-def _copySessionToForm(session):
+def _copy_session_to_form(session):
     """Copy relevant fields from Session to SessionForm."""
     form = SessionForm()
     for field in form.all_fields():
@@ -89,8 +89,8 @@ def _copySessionToForm(session):
     form.check_initialized()
     return form
 
-def _copyFormToSession(request):
-    """Copy relevant fields from SessionForm to Session."""
+def _copy_form_to_session(request):
+    """Copy relevant fields from SessionForm/request to Session."""
     session = Session()
     form = SessionForm()
     for field in form.all_fields():
