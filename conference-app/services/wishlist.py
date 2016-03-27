@@ -3,7 +3,6 @@ from google.appengine.ext import ndb
 from models import ConflictException
 from models.profile import Profile
 from models.session import SessionForms
-from models.session import _copySessionToForm
 from models.wishlist import Wishlist
 from models.wishlist import WishlistForm
 from services import BaseService
@@ -78,7 +77,7 @@ class WishlistService(BaseService):
 
         # Return list of session
         return SessionForms(
-            items = [_copySessionToForm(s) for s in sessions]
+            items = [s.to_form() for s in sessions]
         )
 
     def _get_user_wish_list(self):

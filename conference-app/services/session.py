@@ -7,7 +7,6 @@ from models.conference import Conference
 from models.session import Session
 from models.session import SessionForm
 from models.session import SessionForms
-from models.session import _copySessionToForm, _copyFormToSession
 from services import BaseService
 from services import login_required
 
@@ -44,7 +43,7 @@ class SessionService(BaseService):
         s_key = ndb.Key(Session, s_id, parent = p_key)
 
         # Create and store new session object
-        session = _copyFormToSession(request)
+        session = Session.to_object(request)
         session.key = s_key # set the key since this is a new object
         session.put()
 
@@ -57,8 +56,7 @@ class SessionService(BaseService):
             )
 
         # Return form back
-        form = _copySessionToForm(session)
-        return form
+        return session.to_form()
 
     def get_conference_sessions(self, websafe_conference_key):
         """Given a conference, return all sessions.
@@ -76,7 +74,7 @@ class SessionService(BaseService):
         sessions = Session.query(ancestor = conference.key)
 
         return SessionForms(
-            items = [_copySessionToForm(s) for s in sessions]
+            items = [s.to_form() for s in sessions]
         )
 
     def get_conference_sessions_by_type(self, websafe_conference_key, type_of_session):
@@ -98,7 +96,7 @@ class SessionService(BaseService):
         sessions = query.filter(Session.typeOfSession == type_of_session)
 
         return SessionForms(
-            items = [_copySessionToForm(s) for s in sessions]
+            items = [s.to_form() for s in sessions]
         )
 
     def get_sessions_by_speaker(self, websafe_speaker_key):
@@ -119,5 +117,5 @@ class SessionService(BaseService):
         sessions = query.filter(Session.speakerKey == speaker.key)
 
         return SessionForms(
-            items = [_copySessionToForm(s) for s in sessions]
+            items = [s.to_form() for s in sessions]
         )

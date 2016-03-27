@@ -14,7 +14,6 @@ from models.speaker import SpeakerForm
 from models.speaker import SpeakerForms
 from models.session import Session
 from models.session import SessionForms
-from models.session import _copySessionToForm
 from services.speaker import SpeakerService
 
 

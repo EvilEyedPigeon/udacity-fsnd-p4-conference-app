@@ -29,6 +29,16 @@ class Session(ndb.Model):
     startTime = ndb.TimeProperty()
     duration = ndb.IntegerProperty() # in minutes
 
+    def to_form(self):
+        """Convert Session to SessionForm."""
+        return _copySessionToForm(self)
+
+    @staticmethod
+    def to_object(request):
+        """Convert SessionForm/request to Session."""
+        return _copyFormToSession(request)
+
+
 class SessionForm(messages.Message):
     """SessionForm -- Session outbound form message"""
     name = messages.StringField(1)
