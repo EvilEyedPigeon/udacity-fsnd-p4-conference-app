@@ -24,6 +24,7 @@ from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
+import settings
 from models import ConflictException
 from models import StringMessage
 from models import BooleanMessage
@@ -37,15 +38,8 @@ from models.conference import ConferenceForms
 from models.conference import ConferenceQueryForm
 from models.conference import ConferenceQueryForms
 
-from settings import WEB_CLIENT_ID
-from settings import ANDROID_CLIENT_ID
-from settings import IOS_CLIENT_ID
-from settings import ANDROID_AUDIENCE
-
 from utils import getUserId
 
-EMAIL_SCOPE = endpoints.EMAIL_SCOPE
-API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
 MEMCACHE_ANNOUNCEMENTS_KEY = "RECENT_ANNOUNCEMENTS"
 ANNOUNCEMENT_TPL = ('Last chance to attend! The following conferences '
                     'are nearly sold out: %s')
@@ -86,10 +80,10 @@ CONF_POST_REQUEST = endpoints.ResourceContainer(
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
-@endpoints.api(name='conference', version='v1', audiences=[ANDROID_AUDIENCE],
-    allowed_client_ids=[WEB_CLIENT_ID, API_EXPLORER_CLIENT_ID, ANDROID_CLIENT_ID, IOS_CLIENT_ID],
-    scopes=[EMAIL_SCOPE])
+@endpoints.api(name = "conference", version = "v1",
+    allowed_client_ids = settings.ALLOWED_CLIENT_IDS, 
+    audiences = settings.AUDIENCES,
+    scopes = settings.SCOPES)
 class ConferenceApi(remote.Service):
     """Conference API v0.1"""
 
