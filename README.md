@@ -25,9 +25,10 @@ Model objects and forms are now in the ```models``` package, and api classes
 are in the ```api``` package, with modules for different things such as sessions,
 speakers, and wish lists.
 
-One thing that would be nice is to separate the actual endpoint API classes
-from the implementation of the services, so that the enpoint methods just
-delegate to those internal services.
+Also, the actual implementations of the services are in the ```services```
+package, so the enpoint methods just delegate to those internal services.
+Some more work can be done here to make the separation better. Especially
+when considering the parameters that the services should receive.
 
 Another thing to consider is having a unified API. For the project submission
 there are actually multiple APIs for handling conferences, sessions, speakers,
