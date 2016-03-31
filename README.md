@@ -154,20 +154,40 @@ Required API methods (in ```speaker``` module):
 Usage
 -----
 
-- Clone project
-- Create app engine application
-- Set app ID in `app.yaml`
-- Set client ID in `settings.py` and `static/js/app.js`
-- Deploy to app engine
-- Test with API explorer
+1) Clone the project (if you don't have git, you may download the project from github).
+```
+$ git clone git@github.com:pt314/udacity-fsnd-p4-conference-app.git
+```
+
+2) Download and install the [Google App Engine SDK for Python](https://cloud.google.com/appengine/downloads).
+
+3) Run the App Engine Launcher and add application.
+
+4) Create [App Engine project](https://console.cloud.google.com/) with your own ID.
+
+5) Update the value of `application` in `app.yaml` to the app ID you have registered
+   in the App Engine admin console.
+
+6) Update the values at the top of `settings.py` to reflect the respective
+   client IDs you have registered in the [Developer Console](https://console.developers.google.com/).
+
+7) Update the value of CLIENT_ID in `static/js/app.js` to the Web client ID.
+
+8) (Optional) Mark the configuration files as unchanged as follows:
+```
+$ git update-index --assume-unchanged app.yaml settings.py static/js/app.js
+```
+
+9) Deploy to App Engine and test API with the API explorer.
 
 
 TODO
 ----
 
-- Change code to use Python coding conventions.
+- Change code to use Python coding conventions everywhere.
 - Consider combining into a single API.
 - Do better input validation.
-- Improve design and code when I have more time, since submission date was moved back and only had a few days.
-- Give more detailed usage instructions.
+- Cleanup original conference API code (original code is mostly untouched).
+- Finish generic query method that receives any list of filters, and applies
+  inequality filters in memory if necessary (mostly done, will add later).
 - Play with the UI.
