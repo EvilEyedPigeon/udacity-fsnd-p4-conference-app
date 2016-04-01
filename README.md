@@ -220,6 +220,6 @@ TODO
 - Consider combining into a single API.
 - Do better input validation.
 - Cleanup original conference API code (original code is mostly untouched).
-- Finish generic query method that receives any list of filters, and applies
-  inequality filters in memory if necessary (mostly done, will add later).
+- Polish generic query method that receives any list of filters, and applies
+  inequality filters in memory if necessary.
 - Play with the UI.
