@@ -8,6 +8,16 @@ from google.appengine.ext import ndb
 from models.speaker import Speaker
 
 
+#------ Query params ----------------------------------------------------------
+
+# Strings that can be passed to query filters, and corresponding Session fields.
+# These are the fields that are currently supported when querying for Sessions.
+QUERY_FIELDS = {
+    'TYPE': 'typeOfSession',
+    'TIME': 'startTime',
+}
+
+
 #------ Model objects ---------------------------------------------------------
 
 class SessionType(messages.Enum):

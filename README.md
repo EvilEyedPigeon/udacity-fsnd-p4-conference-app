@@ -138,6 +138,37 @@ all types except for workshops.
 Another possibility is to filter by time or type after doing the query.
 This would be easy, but may be memory intensive and slower. 
 
+For fun, there is an (experimental) query method that received a list of filters.
+It uses all equality filters and inequality filters for at most one field
+when querying the NDB Datastore. Then, it applies other inequality filters
+in memory. For now, it can only receive filters for the session type
+and the start time, since querying any number of fields requires too
+many indices.
+
+API method (in ```session``` module):
+
+- querySessions(QueryForms)
+
+
+To query for all non-workshop sessions before 7 pm, pass the following filters:
+```
+{
+  "filters": 
+  [
+    {
+      "field": "TYPE",
+      "operator": "NE",
+      "value": "WORKSHOP"
+    },
+    {
+      "field": "TIME",
+      "operator": "LT",
+      "value": "19:00:00"
+    }
+  ]
+}
+```
+
 
 Task 4: Add a Task
 ------------------

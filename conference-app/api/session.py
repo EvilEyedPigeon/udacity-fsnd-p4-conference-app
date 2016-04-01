@@ -6,6 +6,7 @@ from protorpc import message_types
 from protorpc import remote
 
 import settings
+from models import QueryForms
 from models.session import SessionForm
 from models.session import SessionForms
 from services.session import SessionService
@@ -102,3 +103,12 @@ class SessionApi(remote.Service):
         """
         return self.session_service.get_sessions_by_speaker(
             request.websafeSpeakerKey)
+
+    @endpoints.method(QueryForms, SessionForms,
+            path='conference/sessions/query',
+            http_method='POST',
+            name='querySessions')
+    def query_sessions(self, request):
+        """(Experimental) Query for sessions."""
+        return self.session_service.query_sessions(
+            request)
